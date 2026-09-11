@@ -66,6 +66,13 @@
         "com.unity.test-framework.performance": "3.2.0"
       }
     },
+    "com.unity.device-simulator.devices": {
+      "version": "1.0.1",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.unity.dt.app-ui": {
       "version": "2.1.11",
       "depth": 1,
@@ -91,7 +98,7 @@
       "dependencies": {}
     },
     "com.unity.ide.rider": {
-      "version": "3.0.38",
+      "version": "3.0.40",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -100,7 +107,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.26",
+      "version": "2.0.28",
       "depth": 0,
       "source": "registry",
       "dependencies": {
