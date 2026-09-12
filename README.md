@@ -1,18 +1,18 @@
 # Yes Chef! — Unity Dev Test (Tentworks Interactive)
 
 A 3-minute single-kitchen cooking game built with Unity 6 + C#. Top-down 3D view, no camera movement.
-The kitchen layout and UI are built in the Unity editor — open `Assets/Scenes/SampleScene.unity`,
+The kitchen layout and UI are built in the Unity editor — open `Assets/Scenes/GameScene.unity`,
 press Play, and press **Start Game**.
 
 ## How to run
 1. Open the project in Unity 6000.4+ (Input System package required, already in `Packages/manifest.json`).
-2. Open `Assets/Scenes/SampleScene.unity` and press Play.
+2. Open `Assets/Scenes/GameScene.unity` and press Play.
 3. Click **Start Game** on the controls panel.
 
 ## Controls
 - **WASD / Arrows** — move the chef.
 - **E** — context interact: take from fridge, place on table/stove, serve at a window, trash held item.
-- **Q** — pick up chopped vegetables / cooked meat.
+- **Q** — cycle fridge selection / pick up chopped vegetables or cooked meat.
 - **1 / 2 / 3** (or HUD buttons) — choose fridge ingredient: Vegetable / Cheese / Meat.
 - **P / Esc** — pause. HUD buttons: Pause, Quit.
 
