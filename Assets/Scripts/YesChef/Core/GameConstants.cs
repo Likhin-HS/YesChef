@@ -12,6 +12,7 @@ namespace YesChef.Core
         public const float GameDuration = 180f;
         public const int MaxActiveOrders = 4;
         public const float OrderRespawnDelay = 5f;
+        public const float OrderExpireTime = 60f;
 
         public const float TableChopDuration = 2f;
         public const float StoveCookDuration = 6f;

@@ -42,6 +42,12 @@ namespace YesChef
         private Vector3 _popupInitialLocalPos;
         private Vector3 _customerBasePos;
         private float _celebrateTimer;
+        private bool _customerArriving;
+        private bool _customerDeparting;
+        private float _customerAnimTimer;
+        private const float CustomerArriveTime = 0.5f;
+        private const float CustomerDepartTime = 0.4f;
+        private const float CustomerSlideDistance = 2.0f;
         private MaterialPropertyBlock _propBlock;
 
         public int WindowIndex => _windowIndex;
@@ -71,6 +77,7 @@ namespace YesChef
             if (_customerChar != null)
             {
                 _customerBasePos = _customerChar.localPosition;
+                HideCustomer();
             }
         }
 
@@ -115,6 +122,12 @@ namespace YesChef
             if (_order != null && !_order.IsComplete)
             {
                 _order.Tick(Time.deltaTime);
+                if (_order.Elapsed >= GameConstants.OrderExpireTime)
+                {
+                    DepartCustomer();
+                    GameManager.Instance?.NotifyOrderCompleted(this, _windowIndex, _order, true);
+                    return;
+                }
                 int sec = (int)_order.Elapsed;
                 if (sec != _lastWorldTimerSec && _worldTimerText != null)
                 {
@@ -126,11 +139,23 @@ namespace YesChef
             }
         }
 
-        public void SpawnInitialOrder(int index)
+        public void SpawnInitialOrder(int index, float delay = 0f)
         {
             Configure(index);
-            _waitingRespawn = false;
-            SpawnOrder();
+            if (delay > 0f)
+            {
+                _waitingRespawn = true;
+                _respawnRemaining = delay;
+                _lastWorldTimerSec = -1;
+                HideCustomer();
+                RefreshVisual(null);
+                RefreshWorldRequirements();
+            }
+            else
+            {
+                _waitingRespawn = false;
+                SpawnOrder();
+            }
         }
 
         public void ResetWindow()
@@ -139,6 +164,8 @@ namespace YesChef
             _waitingRespawn = false;
             _respawnRemaining = 0f;
             _lastWorldTimerSec = -1;
+            _celebrateTimer = 0f;
+            HideCustomer();
             RefreshVisual(null);
             RefreshWorldRequirements();
             if (_worldTimerText != null) _worldTimerText.gameObject.SetActive(false);
@@ -213,6 +240,7 @@ namespace YesChef
             }
             _order = new OrderData(picks);
             _lastWorldTimerSec = -1;
+            ArriveCustomer();
             RefreshVisual(_order);
             RefreshWorldRequirements();
             GameManager.Instance?.NotifyOrderProgress(_windowIndex, _order);
@@ -286,25 +314,93 @@ namespace YesChef
         {
             if (_customerChar == null) return;
 
+            // Arriving: slide + scale in from behind the window
+            if (_customerArriving)
+            {
+                _customerAnimTimer -= Time.deltaTime;
+                float t = 1f - Mathf.Clamp01(_customerAnimTimer / CustomerArriveTime);
+                float smooth = t * t * (3f - 2f * t);
+                Vector3 from = _customerBasePos + new Vector3(0f, 0f, CustomerSlideDistance);
+                _customerChar.localPosition = Vector3.Lerp(from, _customerBasePos, smooth);
+                float scale = Mathf.Lerp(0.4f, 1f, smooth);
+                _customerChar.localScale = new Vector3(scale, scale, scale);
+
+                if (_customerAnimTimer <= 0f)
+                {
+                    _customerArriving = false;
+                    _customerChar.localPosition = _customerBasePos;
+                    _customerChar.localScale = Vector3.one;
+                }
+                return;
+            }
+
+            // Celebrate: hop animation, then trigger departure
             if (_celebrateTimer > 0f)
             {
                 _celebrateTimer -= Time.deltaTime;
                 float hop = Mathf.Abs(Mathf.Sin((1f - Mathf.Clamp01(_celebrateTimer)) * Mathf.PI * 4f)) * 0.12f;
                 _customerChar.localPosition = _customerBasePos + new Vector3(0f, hop, 0f);
+
+                if (_celebrateTimer <= 0f)
+                {
+                    DepartCustomer();
+                }
+                return;
             }
-            else
+
+            // Departing: slide + scale out behind the window
+            if (_customerDeparting)
             {
-                var manager = GameManager.Instance;
-                if (manager != null && manager.IsPlaying && HasOrder)
+                _customerAnimTimer -= Time.deltaTime;
+                float t = 1f - Mathf.Clamp01(_customerAnimTimer / CustomerDepartTime);
+                float smooth = t * t * (3f - 2f * t);
+                Vector3 to = _customerBasePos + new Vector3(0f, 0f, CustomerSlideDistance);
+                _customerChar.localPosition = Vector3.Lerp(_customerBasePos, to, smooth);
+                float scale = Mathf.Lerp(1f, 0.3f, smooth);
+                _customerChar.localScale = new Vector3(scale, scale, scale);
+
+                if (_customerAnimTimer <= 0f)
                 {
-                    float breath = Mathf.Sin(Time.time * 2.5f + _windowIndex * 1.5f) * 0.012f;
-                    _customerChar.localPosition = _customerBasePos + new Vector3(0f, breath, 0f);
+                    _customerDeparting = false;
+                    HideCustomer();
                 }
-                else
-                {
-                    _customerChar.localPosition = _customerBasePos;
-                }
+                return;
             }
+
+            // Idle: subtle breathing bob
+            var manager = GameManager.Instance;
+            if (manager != null && manager.IsPlaying && HasOrder)
+            {
+                float breath = Mathf.Sin(Time.time * 2.5f + _windowIndex * 1.5f) * 0.012f;
+                _customerChar.localPosition = _customerBasePos + new Vector3(0f, breath, 0f);
+            }
+        }
+
+        private void ArriveCustomer()
+        {
+            if (_customerChar == null) return;
+            _customerArriving = true;
+            _customerDeparting = false;
+            _customerAnimTimer = CustomerArriveTime;
+            _customerChar.gameObject.SetActive(true);
+            _customerChar.localPosition = _customerBasePos + new Vector3(0f, 0f, CustomerSlideDistance);
+            _customerChar.localScale = new Vector3(0.4f, 0.4f, 0.4f);
+        }
+
+        private void DepartCustomer()
+        {
+            if (_customerChar == null) return;
+            _customerDeparting = true;
+            _customerArriving = false;
+            _customerAnimTimer = CustomerDepartTime;
+        }
+
+        private void HideCustomer()
+        {
+            if (_customerChar == null) return;
+            _customerChar.gameObject.SetActive(false);
+            _customerArriving = false;
+            _customerDeparting = false;
         }
 
         private void RefreshVisual(OrderData order)

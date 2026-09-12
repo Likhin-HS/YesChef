@@ -2213,7 +2213,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: START Service
+  m_Text: START SERVICE
 --- !u!222 &132756408
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -41077,6 +41077,6 @@ SceneRoots:
   - {fileID: 1440773100}
   - {fileID: 787528575}
   - {fileID: 740343884}
-  - {fileID: 1043243216}
   - {fileID: 617203241}
   - {fileID: 2085192161}
+  - {fileID: 1043243216}

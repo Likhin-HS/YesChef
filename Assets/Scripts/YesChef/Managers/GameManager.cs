@@ -62,7 +62,6 @@ namespace YesChef.Managers
                 _player = FindAnyObjectByType<PlayerController>();
 
             Array.Sort(_customerWindows, (a, b) => a.WindowIndex.CompareTo(b.WindowIndex));
-            StartGame();
         }
 
         private void Update()
@@ -89,7 +88,7 @@ namespace YesChef.Managers
 
             for (int i = 0; i < _customerWindows.Length; i++)
             {
-                _customerWindows[i].SpawnInitialOrder(i);
+                _customerWindows[i].SpawnInitialOrder(i, i * 8f);
             }
         }
 
@@ -128,9 +127,10 @@ namespace YesChef.Managers
             OrderUpdated?.Invoke(windowIndex, order);
         }
 
-        public void NotifyOrderCompleted(CustomerWindow window, int windowIndex, OrderData order)
+        public void NotifyOrderCompleted(CustomerWindow window, int windowIndex, OrderData order, bool expired = false)
         {
             int awarded = order.CalculateScore();
+            if (expired) awarded = Mathf.Min(awarded, 0);
             order.MarkScored(awarded);
             _score += awarded;
 
