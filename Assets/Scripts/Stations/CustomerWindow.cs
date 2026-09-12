@@ -535,7 +535,7 @@ namespace YesChef.Stations
 
             if (_bubbleTimerText != null)
             {
-                _bubbleTimerText.text = sec + "s";
+                _bubbleTimerText.text = GameConstants.FormatSeconds(sec);
                 // Color cues: Normal (<20s) -> Amber warning (20s-35s) -> Red urgent (>35s)
                 if (elapsed >= 35f)
                     _bubbleTimerText.color = new Color(0.9f, 0.2f, 0.2f);
@@ -572,7 +572,7 @@ namespace YesChef.Stations
             int sec = Mathf.CeilToInt(remaining);
             if (_bubbleTimerText != null)
             {
-                _bubbleTimerText.text = "In " + sec + "s";
+                _bubbleTimerText.text = GameConstants.FormatNextIn(sec);
                 _bubbleTimerText.color = new Color(0.45f, 0.45f, 0.5f);
             }
 
