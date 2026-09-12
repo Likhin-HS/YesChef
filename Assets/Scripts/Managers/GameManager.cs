@@ -129,10 +129,9 @@ namespace YesChef.Managers
             OrderUpdated?.Invoke(windowIndex, order);
         }
 
-        public void NotifyOrderCompleted(CustomerWindow window, int windowIndex, OrderData order, bool expired = false)
+        public void NotifyOrderCompleted(CustomerWindow window, int windowIndex, OrderData order)
         {
             int awarded = order.CalculateScore();
-            if (expired) awarded = Mathf.Min(awarded, 0);
             order.MarkScored(awarded);
             _score += awarded;
 

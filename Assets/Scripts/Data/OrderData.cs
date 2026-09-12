@@ -7,9 +7,9 @@ namespace YesChef.Data
     /// <summary>
     /// Runtime model for a single customer order.
     /// Requirements are stored as per-type counts so duplicate ingredients
-    /// (e.g. "Meat, Meat, Meat") fall out naturally with no bookkeeping.
+    /// (e.g. "Meat, Meat, Meat") fall out naturally.
     /// Scoring formula: sum(ingredient values) - floor(seconds open), per blueprint spec.
-    /// Requirement text is cached to guarantee zero per-frame heap allocations during UI updates.
+    /// Requirement text is cached to avoid string allocations during UI updates.
     /// </summary>
     public sealed class OrderData
     {
@@ -103,12 +103,12 @@ namespace YesChef.Data
         }
 
         /// <summary>
-        /// Returns cached requirement string. Zero heap allocation per call.
+        /// Returns cached requirement string.
         /// </summary>
         public string GetRequirementText() => _cachedRequirementText;
 
         /// <summary>
-        /// Populates a reusable list with remaining ingredient types for zero-allocation UI icon binding.
+        /// Populates a list with remaining ingredient types for UI icon binding.
         /// </summary>
         public void FillRemainingIngredients(IList<IngredientType> destination)
         {

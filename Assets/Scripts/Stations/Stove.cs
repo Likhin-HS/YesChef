@@ -8,7 +8,7 @@ namespace YesChef.Stations
     /// <summary>
     /// Cooks up to two raw meats in parallel over <see cref="GameConstants.StoveCookDuration"/> seconds.
     /// Player may walk away; E or Q collects the first finished portion when hands are free.
-    /// Uses MaterialPropertyBlock for zero-allocation, batch-friendly visual state swaps.
+    /// Uses MaterialPropertyBlock to update slot visuals without creating material instances.
     /// </summary>
     public sealed class Stove : Interactable
     {

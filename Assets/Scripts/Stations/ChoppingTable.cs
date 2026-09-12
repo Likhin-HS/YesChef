@@ -8,7 +8,7 @@ namespace YesChef.Stations
     /// <summary>
     /// Chops one raw vegetable over <see cref="GameConstants.TableChopDuration"/> seconds.
     /// Player may walk away; E or Q collects the chopped result when hands are free.
-    /// Uses MaterialPropertyBlock for zero-allocation, batch-friendly color swapping.
+    /// Uses MaterialPropertyBlock to update visuals without creating material instances.
     /// </summary>
     public sealed class ChoppingTable : Interactable
     {

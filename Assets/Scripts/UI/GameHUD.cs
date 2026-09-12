@@ -12,7 +12,6 @@ namespace YesChef.UI
 {
     /// <summary>
     /// Drives all screen-space HUD elements and binds them to <see cref="GameManager"/> events.
-    /// Engineered for zero per-frame heap allocations (0 B GC Alloc) and minimal Canvas vertex dirtying.
     /// </summary>
     public sealed class GameHUD : MonoBehaviour
     {
@@ -197,9 +196,6 @@ namespace YesChef.UI
 
         private void WirePauseModal()
         {
-            if (_pausePanel == null) return;
-
-            // Wire explicit serialized references if assigned
             if (_pauseResumeButton != null)
             {
                 _pauseResumeButton.onClick.AddListener(() => _manager.TogglePause());
@@ -207,31 +203,6 @@ namespace YesChef.UI
             if (_pauseQuitButton != null)
             {
                 _pauseQuitButton.onClick.AddListener(() => _manager.QuitGame());
-            }
-
-            // Inspect all buttons under _pausePanel to ensure any Resume/Quit button is wired
-            var buttons = _pausePanel.GetComponentsInChildren<Button>(true);
-            foreach (var btn in buttons)
-            {
-                if (btn == null) continue;
-                string btnName = btn.gameObject.name.ToLowerInvariant();
-                var label = btn.GetComponentInChildren<Text>(true);
-                string text = label != null ? label.text.ToLowerInvariant() : string.Empty;
-
-                if (btnName.Contains("quit") || text.Contains("quit"))
-                {
-                    if (btn != _pauseQuitButton)
-                    {
-                        btn.onClick.AddListener(() => _manager.QuitGame());
-                    }
-                }
-                else if (btnName.Contains("resume") || text.Contains("resume") || text.Contains("continue") || btnName.Contains("play"))
-                {
-                    if (btn != _pauseResumeButton)
-                    {
-                        btn.onClick.AddListener(() => _manager.TogglePause());
-                    }
-                }
             }
         }
     }

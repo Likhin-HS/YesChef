@@ -3,16 +3,14 @@ using UnityEngine;
 namespace YesChef.Core
 {
     /// <summary>
-    /// Central tuning constants and pre-allocated UI string caches for the Yes Chef! prototype.
-    /// Gameplay numbers, ingredient values, shared colors, and zero-allocation string lookups
-    /// live here so balancing and visual consistency are one-file changes.
+    /// Central tuning constants and shared styling for the Yes Chef! prototype.
+    /// Gameplay balance numbers, station timers, colors, and cached string tables are kept here.
     /// </summary>
     public static class GameConstants
     {
         public const float GameDuration = 180f;
         public const int MaxActiveOrders = 4;
         public const float OrderRespawnDelay = 5f;
-        public const float OrderExpireTime = 60f;
 
         public const float TableChopDuration = 2f;
         public const float StoveCookDuration = 6f;
@@ -55,7 +53,7 @@ namespace YesChef.Core
         public static readonly Color PopupGoodColor = new Color(0.1f, 0.65f, 0.1f);
         public static readonly Color PopupBadColor = Color.red;
 
-        // Pre-cached string tables for zero-allocation runtime display (0 B GC Alloc)
+        // Pre-cached string tables to avoid string allocations during frequent HUD updates
         private static readonly string[] s_SecondsStrings = new string[301];
         private static readonly string[] s_TimerClockStrings = new string[301];
         private static readonly string[] s_NextInStrings = new string[301];
