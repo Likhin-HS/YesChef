@@ -24,10 +24,14 @@ namespace YesChef.Data
         public string DisplayName => Type switch
         {
             IngredientType.Cheese => "Cheese",
-            IngredientType.Vegetable => IsPrepared ? "Chopped Veg" : "Raw Veg",
-            IngredientType.Meat => IsPrepared ? "Cooked Meat" : "Raw Meat",
+            IngredientType.Vegetable => IsPrepared ? "Chopped Vegetable" : "Raw Vegetable (Cabbage)",
+            IngredientType.Meat => IsPrepared ? "Cooked Meat" : "Raw Meat (Steak)",
             _ => "Ingredient"
         };
+
+        public string ActionHint => IsPrepared
+            ? "Ready to Deliver"
+            : (Type == IngredientType.Vegetable ? "Chop on Table" : "Cook on Stove");
 
         public Color DisplayColor => Type switch
         {

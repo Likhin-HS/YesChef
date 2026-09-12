@@ -26,10 +26,12 @@ namespace YesChef.UI
 
         [Header("Top Bar")]
         [SerializeField] private Text _scoreText;
+        [SerializeField] private Text _highScoreText;
         [SerializeField] private Text _timerText;
         [SerializeField] private Text _heldText;
 
-        [Header("Bottom Bar")]
+        [Header("Bottom Bar & Controls")]
+        [SerializeField] private Text _controlsTitle;
         [SerializeField] private Text _promptText;
         [SerializeField] private Text _fridgeText;
         [SerializeField] private Button _vegButton;
@@ -56,7 +58,10 @@ namespace YesChef.UI
         private readonly float[] _respawnIn = new float[GameConstants.MaxActiveOrders];
         private readonly int[] _lastCardSeconds = new int[GameConstants.MaxActiveOrders];
 
-        private string _lastPrompt = string.Empty;
+        private const string DefaultControlsTitle = "Controls";
+        private const string DefaultControlsBody = "<b>W  A  S  D</b>   - Move\n<b>E</b>               - Interact / Pick up / Place\n<b>Space</b>       - Drop (optional)";
+
+        private string _lastPrompt = null;
         private string _lastHeldDisplayName = string.Empty;
         private int _lastTimerSecond = -1;
 
@@ -173,7 +178,17 @@ namespace YesChef.UI
             if (currentPrompt != _lastPrompt)
             {
                 _lastPrompt = currentPrompt;
-                _promptText.text = currentPrompt;
+                if (string.IsNullOrEmpty(currentPrompt))
+                {
+                    if (_controlsTitle != null) _controlsTitle.text = DefaultControlsTitle;
+                    _promptText.text = DefaultControlsBody;
+                }
+                else
+                {
+                    if (_controlsTitle != null) _controlsTitle.text = "<color=#F1C40F>★ CURRENT ACTION</color>";
+                    string promptColor = currentPrompt.Contains("!") ? "#F39C12" : "#2ECC71";
+                    _promptText.text = $"<color={promptColor}><b>▶ {currentPrompt}</b></color>\n<size=19><color=#8892B0><b>W A S D</b> - Move  •  <b>Space</b> - Drop</color></size>";
+                }
             }
         }
 
@@ -186,11 +201,23 @@ namespace YesChef.UI
         {
             if (_heldText == null) return;
 
-            string name = item.HasValue ? item.Value.DisplayName : "(empty)";
-            if (name != _lastHeldDisplayName)
+            string textToDisplay;
+            if (item.HasValue)
             {
-                _lastHeldDisplayName = name;
-                _heldText.text = "Held: " + name;
+                var val = item.Value;
+                string colorHex = val.IsPrepared ? "#2ecc71" : "#f39c12";
+                if (val.Type == IngredientType.Meat && !val.IsPrepared) colorHex = "#e74c3c";
+                textToDisplay = $"<b>{val.DisplayName}</b>\n<size=13><color={colorHex}>▶ {val.ActionHint}</color></size>";
+            }
+            else
+            {
+                textToDisplay = "<color=#888888>Hands Empty</color>";
+            }
+
+            if (textToDisplay != _lastHeldDisplayName)
+            {
+                _lastHeldDisplayName = textToDisplay;
+                _heldText.text = textToDisplay;
             }
         }
 
@@ -268,15 +295,30 @@ namespace YesChef.UI
             if (total == _lastTimerSecond) return;
             _lastTimerSecond = total;
 
-            _timerText.text = $"Time {total / 60}:{total % 60:D2}";
-            _timerText.color = remaining <= 30f ? Color.red : Color.black;
+            if (_highScoreText != null)
+            {
+                _timerText.text = $"{total / 60:D2}:{total % 60:D2}";
+            }
+            else
+            {
+                _timerText.text = $"Time {total / 60}:{total % 60:D2}";
+            }
+            _timerText.color = remaining <= 30f ? new Color(1f, 0.35f, 0.35f) : Color.white;
         }
 
         private void OnScore(int score, int high)
         {
             if (_scoreText != null)
             {
-                _scoreText.text = $"Score {score}  •  Best {high}";
+                if (_highScoreText != null)
+                {
+                    _scoreText.text = score.ToString();
+                    _highScoreText.text = high.ToString();
+                }
+                else
+                {
+                    _scoreText.text = $"Score {score}  •  Best {high}";
+                }
             }
         }
 

@@ -24,27 +24,48 @@ namespace YesChef.Player
         [SerializeField] private Renderer _heldVisual;
         [SerializeField] private Transform _heldAnchor;
 
+        [Header("Held Models")]
+        [SerializeField] private GameObject _heldRawVeg;
+        [SerializeField] private GameObject _heldChoppedVeg;
+        [SerializeField] private GameObject _heldRawMeat;
+        [SerializeField] private GameObject _heldCookedMeat;
+        [SerializeField] private GameObject _heldCheese;
+
+        [Header("Overhead Floating Badge")]
+        [SerializeField] private GameObject _overheadBadge;
+        [SerializeField] private TextMesh _overheadText;
+
         private CharacterController _controller;
         private IngredientItem? _held;
         private MaterialPropertyBlock _propBlock;
 
         public IngredientItem? Held => _held;
         public bool HasHeld => _held.HasValue;
+        public bool IsMoving { get; private set; }
+        public Vector2 MoveInput { get; private set; }
+        public float MoveSpeed => _moveSpeed;
 
         private void Awake()
         {
             _controller = GetComponent<CharacterController>();
             _propBlock = new MaterialPropertyBlock();
-            if (_heldVisual != null)
-            {
-                _heldVisual.gameObject.SetActive(false);
-            }
+            if (_heldVisual != null) _heldVisual.gameObject.SetActive(false);
+            if (_heldRawVeg != null) _heldRawVeg.SetActive(false);
+            if (_heldChoppedVeg != null) _heldChoppedVeg.SetActive(false);
+            if (_heldRawMeat != null) _heldRawMeat.SetActive(false);
+            if (_heldCookedMeat != null) _heldCookedMeat.SetActive(false);
+            if (_heldCheese != null) _heldCheese.SetActive(false);
+            if (_overheadBadge != null) _overheadBadge.SetActive(false);
         }
 
         private void Update()
         {
             if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
+            {
+                MoveInput = Vector2.zero;
+                IsMoving = false;
                 return;
+            }
 
             Vector2 input = Vector2.zero;
             var keyboard = Keyboard.current;
@@ -64,6 +85,8 @@ namespace YesChef.Player
             }
 
             input = Vector2.ClampMagnitude(input, 1f);
+            MoveInput = input;
+            IsMoving = input.sqrMagnitude > 0.001f;
 
             Vector3 move = new Vector3(input.x, 0f, input.y) * _moveSpeed * Time.deltaTime;
             move.y = -4f * Time.deltaTime; // slight grounding force
@@ -85,6 +108,14 @@ namespace YesChef.Player
             {
                 Vector3 face = new Vector3(input.x, 0f, input.y);
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(face), 14f * Time.deltaTime);
+            }
+        }
+
+        private void LateUpdate()
+        {
+            if (_overheadBadge != null && _overheadBadge.activeSelf)
+            {
+                _overheadBadge.transform.rotation = Quaternion.Euler(62f, 0f, 0f);
             }
         }
 
@@ -118,20 +149,71 @@ namespace YesChef.Player
         private void RefreshHeldVisual()
         {
             HeldChanged?.Invoke(_held);
-            if (_heldVisual == null) return;
 
-            if (!_held.HasValue)
+            bool hasItem = _held.HasValue;
+
+            if (_heldRawVeg != null)
+                _heldRawVeg.SetActive(hasItem && _held.Value.Type == IngredientType.Vegetable && !_held.Value.IsPrepared);
+
+            if (_heldChoppedVeg != null)
+                _heldChoppedVeg.SetActive(hasItem && _held.Value.Type == IngredientType.Vegetable && _held.Value.IsPrepared);
+
+            if (_heldRawMeat != null)
+                _heldRawMeat.SetActive(hasItem && _held.Value.Type == IngredientType.Meat && !_held.Value.IsPrepared);
+
+            if (_heldCookedMeat != null)
+                _heldCookedMeat.SetActive(hasItem && _held.Value.Type == IngredientType.Meat && _held.Value.IsPrepared);
+
+            if (_heldCheese != null)
+                _heldCheese.SetActive(hasItem && _held.Value.Type == IngredientType.Cheese);
+
+            bool hasSpecific = (_heldRawVeg != null && _heldRawVeg.activeSelf) ||
+                               (_heldChoppedVeg != null && _heldChoppedVeg.activeSelf) ||
+                               (_heldRawMeat != null && _heldRawMeat.activeSelf) ||
+                               (_heldCookedMeat != null && _heldCookedMeat.activeSelf) ||
+                               (_heldCheese != null && _heldCheese.activeSelf);
+
+            if (_heldVisual != null)
             {
-                _heldVisual.gameObject.SetActive(false);
-                return;
+                if (!hasItem || hasSpecific)
+                {
+                    _heldVisual.gameObject.SetActive(false);
+                }
+                else
+                {
+                    _heldVisual.gameObject.SetActive(true);
+                    Color itemColor = _held.Value.DisplayColor;
+                    _heldVisual.GetPropertyBlock(_propBlock);
+                    _propBlock.SetColor(s_ColorId, itemColor);
+                    _propBlock.SetColor(s_LegacyColorId, itemColor);
+                    _heldVisual.SetPropertyBlock(_propBlock);
+                }
             }
 
-            _heldVisual.gameObject.SetActive(true);
-            Color itemColor = _held.Value.DisplayColor;
-            _heldVisual.GetPropertyBlock(_propBlock);
-            _propBlock.SetColor(s_ColorId, itemColor);
-            _propBlock.SetColor(s_LegacyColorId, itemColor);
-            _heldVisual.SetPropertyBlock(_propBlock);
+            if (_overheadBadge != null)
+            {
+                _overheadBadge.SetActive(hasItem);
+                if (hasItem && _overheadText != null)
+                {
+                    var item = _held.Value;
+                    if (item.Type == IngredientType.Vegetable)
+                    {
+                        _overheadText.text = item.IsPrepared
+                            ? "Chopped Veg\n<color=#2ecc71>READY TO SERVE</color>"
+                            : "Raw Veg (Cabbage)\n<color=#f39c12>CHOP ON TABLE</color>";
+                    }
+                    else if (item.Type == IngredientType.Meat)
+                    {
+                        _overheadText.text = item.IsPrepared
+                            ? "Cooked Meat\n<color=#2ecc71>READY TO SERVE</color>"
+                            : "Raw Meat (Steak)\n<color=#e74c3c>COOK ON STOVE</color>";
+                    }
+                    else if (item.Type == IngredientType.Cheese)
+                    {
+                        _overheadText.text = "Cheese\n<color=#2ecc71>READY TO SERVE</color>";
+                    }
+                }
+            }
         }
     }
 }

@@ -19,6 +19,8 @@ namespace YesChef.Stations
         [SerializeField] private Transform[] _slotBars = new Transform[0];
         [SerializeField] private Transform[] _slotFills = new Transform[0];
         [SerializeField] private TextMesh[] _slotTimerTexts = new TextMesh[0];
+        [SerializeField] private GameObject[] _slotSteams = new GameObject[0];
+        [SerializeField] private Renderer[] _slotLeds = new Renderer[0];
 
         private readonly float[] _remaining = new float[GameConstants.StoveSlotCount];
         private readonly bool[] _active = new bool[GameConstants.StoveSlotCount];
@@ -207,6 +209,26 @@ namespace YesChef.Stations
                 else
                 {
                     timerText.gameObject.SetActive(false);
+                }
+            }
+
+            for (int i = 0; i < _slotSteams.Length && i < GameConstants.StoveSlotCount; i++)
+            {
+                var steam = _slotSteams[i];
+                if (steam != null) steam.SetActive(_active[i] || _ready[i]);
+            }
+
+            for (int i = 0; i < _slotLeds.Length && i < GameConstants.StoveSlotCount; i++)
+            {
+                var led = _slotLeds[i];
+                if (led != null)
+                {
+                    bool lit = _active[i] || _ready[i];
+                    Color ledColor = lit ? new Color(1.0f, 0.65f, 0.1f) : new Color(0.1f, 0.12f, 0.15f);
+                    led.GetPropertyBlock(_propBlock);
+                    _propBlock.SetColor(s_ColorId, ledColor);
+                    _propBlock.SetColor(s_LegacyColorId, ledColor);
+                    led.SetPropertyBlock(_propBlock);
                 }
             }
         }

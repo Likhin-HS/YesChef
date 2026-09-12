@@ -20,7 +20,7 @@ namespace YesChef.Stations
         public override string GetPrompt(PlayerController player)
         {
             if (player.HasHeld) return "Hands full — deliver or trash it";
-            return $"E: take a {Selected}  •  1 Veg / 2 Cheese / 3 Meat to choose";
+            return $"E: take a {Selected}  •  1 Veg / 2 Cheese / 3 Meat";
         }
 
         public override void Interact(PlayerController player)

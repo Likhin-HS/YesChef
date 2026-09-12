@@ -21,6 +21,7 @@ namespace YesChef.Stations
         [SerializeField] private TextMesh _worldTimerText;
 
         private MaterialPropertyBlock _propBlock;
+        private Renderer[] _itemRenderers;
         private bool _busy;
         private bool _ready;
         private float _remaining;
@@ -34,6 +35,10 @@ namespace YesChef.Stations
         {
             SetStationName("Table");
             _propBlock = new MaterialPropertyBlock();
+            if (_itemVisual != null)
+            {
+                _itemRenderers = _itemVisual.GetComponentsInChildren<Renderer>(true);
+            }
             if (_worldTimerText == null)
             {
                 _worldTimerText = GetComponentInChildren<TextMesh>(true);
@@ -67,7 +72,19 @@ namespace YesChef.Stations
             }
             if (player.Held is { Type: IngredientType.Vegetable, State: IngredientState.Raw })
             {
-                return "E: place vegetable to chop";
+                return "E: place Raw Vegetable (Cabbage) to chop";
+            }
+            if (player.Held is { Type: IngredientType.Vegetable, State: IngredientState.Prepared })
+            {
+                return "Vegetable is already chopped! Deliver to Customer Window";
+            }
+            if (player.Held is { Type: IngredientType.Meat })
+            {
+                return "Bring Meat to Stove to cook!";
+            }
+            if (player.Held is { Type: IngredientType.Cheese })
+            {
+                return "Cheese is ready-to-serve! Deliver to Customer Window";
             }
             return "Bring a raw vegetable here (Fridge: press 1)";
         }
@@ -117,10 +134,25 @@ namespace YesChef.Stations
                 if (show)
                 {
                     Color color = _ready ? GameConstants.VegPreparedColor : GameConstants.VegRawColor;
-                    _itemVisual.GetPropertyBlock(_propBlock);
-                    _propBlock.SetColor(s_ColorId, color);
-                    _propBlock.SetColor(s_LegacyColorId, color);
-                    _itemVisual.SetPropertyBlock(_propBlock);
+                    if (_itemRenderers != null && _itemRenderers.Length > 0)
+                    {
+                        for (int i = 0; i < _itemRenderers.Length; i++)
+                        {
+                            var r = _itemRenderers[i];
+                            if (r == null) continue;
+                            r.GetPropertyBlock(_propBlock);
+                            _propBlock.SetColor(s_ColorId, color);
+                            _propBlock.SetColor(s_LegacyColorId, color);
+                            r.SetPropertyBlock(_propBlock);
+                        }
+                    }
+                    else
+                    {
+                        _itemVisual.GetPropertyBlock(_propBlock);
+                        _propBlock.SetColor(s_ColorId, color);
+                        _propBlock.SetColor(s_LegacyColorId, color);
+                        _itemVisual.SetPropertyBlock(_propBlock);
+                    }
                 }
             }
 

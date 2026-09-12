@@ -62,9 +62,7 @@ namespace YesChef.Managers
                 _player = FindAnyObjectByType<PlayerController>();
 
             Array.Sort(_customerWindows, (a, b) => a.WindowIndex.CompareTo(b.WindowIndex));
-            SetState(GameState.NotStarted);
-            TimerChanged?.Invoke(_timeRemaining);
-            ScoreChanged?.Invoke(_score, _highScore);
+            StartGame();
         }
 
         private void Update()
