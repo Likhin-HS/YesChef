@@ -3,12 +3,21 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using YesChef.Core;
 using YesChef.Data;
+using YesChef.Managers;
 
 namespace YesChef.Player
 {
+    /// <summary>
+    /// Player character movement and single-held item inventory controller.
+    /// Clamped to the kitchen bounds. Enforces single-held item rule strictly.
+    /// Uses MaterialPropertyBlock for the held visual to prevent runtime material leaks.
+    /// </summary>
     [RequireComponent(typeof(CharacterController))]
     public sealed class PlayerController : MonoBehaviour
     {
+        private static readonly int s_ColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int s_LegacyColorId = Shader.PropertyToID("_Color");
+
         public event Action<IngredientItem?> HeldChanged;
 
         [SerializeField] private float _moveSpeed = GameConstants.PlayerMoveSpeed;
@@ -17,6 +26,7 @@ namespace YesChef.Player
 
         private CharacterController _controller;
         private IngredientItem? _held;
+        private MaterialPropertyBlock _propBlock;
 
         public IngredientItem? Held => _held;
         public bool HasHeld => _held.HasValue;
@@ -24,13 +34,16 @@ namespace YesChef.Player
         private void Awake()
         {
             _controller = GetComponent<CharacterController>();
+            _propBlock = new MaterialPropertyBlock();
             if (_heldVisual != null)
+            {
                 _heldVisual.gameObject.SetActive(false);
+            }
         }
 
         private void Update()
         {
-            if (Managers.GameManager.Instance != null && !Managers.GameManager.Instance.IsPlaying)
+            if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
                 return;
 
             Vector2 input = Vector2.zero;
@@ -42,26 +55,36 @@ namespace YesChef.Player
                 if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) input.x -= 1f;
                 if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) input.x += 1f;
             }
+
+            // Also support Gamepad left stick if connected
             var gamepad = Gamepad.current;
-            if (gamepad != null)
-                input += Vector2.ClampMagnitude(gamepad.leftStick.ReadValue() + gamepad.dpad.ReadValue(), 1f);
+            if (gamepad != null && input.sqrMagnitude < 0.01f)
+            {
+                input = gamepad.leftStick.ReadValue();
+            }
+
             input = Vector2.ClampMagnitude(input, 1f);
 
             Vector3 move = new Vector3(input.x, 0f, input.y) * _moveSpeed * Time.deltaTime;
-            move.y = -2f * Time.deltaTime;
+            move.y = -4f * Time.deltaTime; // slight grounding force
             _controller.Move(move);
 
-            Vector3 clamped = transform.position;
-            clamped.x = Mathf.Clamp(clamped.x, -GameConstants.KitchenWidth / 2f + 0.8f, GameConstants.KitchenWidth / 2f - 0.8f);
-            clamped.z = Mathf.Clamp(clamped.z, -GameConstants.KitchenDepth / 2f + 0.8f, GameConstants.KitchenDepth / 2f - 0.8f);
-            clamped.y = 0f;
-            transform.position = clamped;
-
-            if (move.sqrMagnitude > 0.0001f)
+            // Safety boundary clamp
+            Vector3 pos = transform.position;
+            float halfW = GameConstants.KitchenWidth / 2f - 0.8f;
+            float halfD = GameConstants.KitchenDepth / 2f - 0.8f;
+            if (pos.x < -halfW || pos.x > halfW || pos.z < -halfD || pos.z > halfD)
             {
-                Vector3 face = new Vector3(move.x, 0f, move.z);
-                if (face.sqrMagnitude > 0.0001f)
-                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(face), 12f * Time.deltaTime);
+                pos.x = Mathf.Clamp(pos.x, -halfW, halfW);
+                pos.z = Mathf.Clamp(pos.z, -halfD, halfD);
+                pos.y = 0f;
+                transform.position = pos;
+            }
+
+            if (input.sqrMagnitude > 0.001f)
+            {
+                Vector3 face = new Vector3(input.x, 0f, input.y);
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(face), 14f * Time.deltaTime);
             }
         }
 
@@ -86,7 +109,7 @@ namespace YesChef.Player
             return true;
         }
 
-        public void ClearHeldVisual()
+        public void ClearHeld()
         {
             _held = null;
             RefreshHeldVisual();
@@ -96,13 +119,19 @@ namespace YesChef.Player
         {
             HeldChanged?.Invoke(_held);
             if (_heldVisual == null) return;
+
             if (!_held.HasValue)
             {
                 _heldVisual.gameObject.SetActive(false);
                 return;
             }
+
             _heldVisual.gameObject.SetActive(true);
-            _heldVisual.material.color = _held.Value.DisplayColor;
+            Color itemColor = _held.Value.DisplayColor;
+            _heldVisual.GetPropertyBlock(_propBlock);
+            _propBlock.SetColor(s_ColorId, itemColor);
+            _propBlock.SetColor(s_LegacyColorId, itemColor);
+            _heldVisual.SetPropertyBlock(_propBlock);
         }
     }
 }

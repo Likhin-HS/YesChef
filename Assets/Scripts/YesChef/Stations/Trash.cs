@@ -1,9 +1,8 @@
+using UnityEngine;
 using YesChef.Player;
 
 namespace YesChef.Stations
 {
-    using UnityEngine;
-
     /// <summary>
     /// Discards whatever the player is holding. Safety valve for wrong picks.
     /// </summary>

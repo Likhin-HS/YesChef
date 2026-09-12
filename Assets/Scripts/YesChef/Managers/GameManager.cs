@@ -8,8 +8,8 @@ using YesChef.Stations;
 namespace YesChef.Managers
 {
     /// <summary>
-    /// Owns game state, timer, score, high-score persistence, and order spawning.
-    /// Stations and windows report to this manager; UI observes it through events.
+    /// Owns game state, 3-minute timer, score tally, session high-score persistence, and order management.
+    /// Stations and windows report to this manager; UI observes it through decoupled events.
     /// </summary>
     public sealed class GameManager : MonoBehaviour
     {
@@ -53,13 +53,13 @@ namespace YesChef.Managers
         private void Start()
         {
             if (_customerWindows.Length == 0)
-                _customerWindows = FindObjectsByType<CustomerWindow>(FindObjectsSortMode.None);
+                _customerWindows = FindObjectsByType<CustomerWindow>();
             if (_tables.Length == 0)
-                _tables = FindObjectsByType<ChoppingTable>(FindObjectsSortMode.None);
+                _tables = FindObjectsByType<ChoppingTable>();
             if (_stoves.Length == 0)
-                _stoves = FindObjectsByType<Stove>(FindObjectsSortMode.None);
+                _stoves = FindObjectsByType<Stove>();
             if (_player == null)
-                _player = FindFirstObjectByType<PlayerController>();
+                _player = FindAnyObjectByType<PlayerController>();
 
             Array.Sort(_customerWindows, (a, b) => a.WindowIndex.CompareTo(b.WindowIndex));
             SetState(GameState.NotStarted);
@@ -70,10 +70,13 @@ namespace YesChef.Managers
         private void Update()
         {
             if (_state != GameState.Playing) return;
+
             _timeRemaining = Mathf.Max(0f, _timeRemaining - Time.deltaTime);
             TimerChanged?.Invoke(_timeRemaining);
             if (_timeRemaining <= 0f)
+            {
                 EndGame();
+            }
         }
 
         public void StartGame()
@@ -85,21 +88,32 @@ namespace YesChef.Managers
             ScoreChanged?.Invoke(_score, _highScore);
             TimerChanged?.Invoke(_timeRemaining);
             SetState(GameState.Playing);
+
             for (int i = 0; i < _customerWindows.Length; i++)
+            {
                 _customerWindows[i].SpawnInitialOrder(i);
+            }
         }
 
         public void RestartGame()
         {
             foreach (var window in _customerWindows)
+            {
                 window.ResetWindow();
+            }
             StartGame();
         }
 
         public void TogglePause()
         {
-            if (_state == GameState.Playing) SetState(GameState.Paused);
-            else if (_state == GameState.Paused) SetState(GameState.Playing);
+            if (_state == GameState.Playing)
+            {
+                SetState(GameState.Paused);
+            }
+            else if (_state == GameState.Paused)
+            {
+                SetState(GameState.Playing);
+            }
         }
 
         public void QuitGame()
@@ -121,6 +135,30 @@ namespace YesChef.Managers
             int awarded = order.CalculateScore();
             order.MarkScored(awarded);
             _score += awarded;
+
+            ScoreChanged?.Invoke(_score, _highScore);
+            OrderUpdated?.Invoke(windowIndex, order);
+            OrderCompleted?.Invoke(windowIndex, awarded);
+            window.ShowScorePopup(awarded);
+            window.BeginRespawn();
+        }
+
+        private void ResetStations()
+        {
+            foreach (var table in _tables)
+            {
+                table.ResetStation();
+            }
+            foreach (var stove in _stoves)
+            {
+                stove.ResetStation();
+            }
+            _player?.ClearHeld();
+        }
+
+        private void EndGame()
+        {
+            // Blueprint spec: Evaluate high score at end of 3-minute session
             if (_score > _highScore)
             {
                 _highScore = _score;
@@ -128,22 +166,14 @@ namespace YesChef.Managers
                 PlayerPrefs.SetInt(GameConstants.HighScoreKey, _highScore);
                 PlayerPrefs.Save();
             }
+            else
+            {
+                _wasNewHighScore = false;
+            }
+
             ScoreChanged?.Invoke(_score, _highScore);
-            OrderUpdated?.Invoke(windowIndex, order);
-            OrderCompleted?.Invoke(windowIndex, awarded);
-            StartCoroutine(window.RespawnRoutine());
+            SetState(GameState.GameOver);
         }
-
-        private void ResetStations()
-        {
-            foreach (var table in _tables)
-                table.ResetStation();
-            foreach (var stove in _stoves)
-                stove.ResetStation();
-            _player?.ClearHeldVisual();
-        }
-
-        private void EndGame() => SetState(GameState.GameOver);
 
         private void SetState(GameState next)
         {

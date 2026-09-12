@@ -10,11 +10,11 @@ press Play, and press **Start Game**.
 3. Click **Start Game** on the controls panel.
 
 ## Controls
-- **WASD / Arrows** (or left stick) — move the chef.
-- **E** (or gamepad South) — context interact: take from fridge, place on table/stove, serve at a window, trash held item.
-- **Q** (or gamepad West) — pick up chopped vegetables / cooked meat.
+- **WASD / Arrows** — move the chef.
+- **E** — context interact: take from fridge, place on table/stove, serve at a window, trash held item.
+- **Q** — pick up chopped vegetables / cooked meat.
 - **1 / 2 / 3** (or HUD buttons) — choose fridge ingredient: Vegetable / Cheese / Meat.
-- **P / Esc** (or gamepad Start) — pause. HUD buttons: Pause, Quit.
+- **P / Esc** — pause. HUD buttons: Pause, Quit.
 
 ## Rules (per spec)
 - 3-minute timer, max 4 active orders, game starts with 4 open orders.
@@ -37,11 +37,9 @@ press Play, and press **Start Game**.
   3-minute timer, score + high-score persistence; UI observes it through events.
 - `Assets/Scripts/YesChef/UI/GameHUD.cs` — drives all screen-space HUD elements (score, timer, order cards,
   modals). UI hierarchy is built in the editor; the script handles logic only.
-- `Assets/Editor/SceneSetupEditor.cs` — editor menu tool (`Tools > YesChef > Build HUD Canvas`)
-  for scaffolding the Canvas hierarchy and wiring SerializeField references.
 
 ## Design decisions
-- New Input System only (the project's active input handling); keyboard + gamepad supported.
+- New Input System only (the project's active input handling); keyboard controls, PC only.
 - One held item enforced by `PlayerController.TryGive/TryTake`, so stations never duplicate or lose items.
 - Q (Alternate) separates "place" from "collect" so walking away from the stove/table is safe and readable.
 - Fridge uses a selected-ingredient model (1/2/3 + E) so one station serves all three ingredients with clear prompts.

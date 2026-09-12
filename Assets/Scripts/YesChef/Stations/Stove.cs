@@ -6,22 +6,33 @@ using YesChef.Player;
 namespace YesChef.Stations
 {
     /// <summary>
-    /// Cooks up to two raw meats in parallel. Player may walk away; Q collects
-    /// the first finished portion while other slots keep cooking.
+    /// Cooks up to two raw meats in parallel over <see cref="GameConstants.StoveCookDuration"/> seconds.
+    /// Player may walk away; E or Q collects the first finished portion when hands are free.
+    /// Uses MaterialPropertyBlock for zero-allocation, batch-friendly visual state swaps.
     /// </summary>
     public sealed class Stove : Interactable
     {
+        private static readonly int s_ColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int s_LegacyColorId = Shader.PropertyToID("_Color");
+
         [SerializeField] private Renderer[] _slotVisuals = new Renderer[0];
         [SerializeField] private Transform[] _slotBars = new Transform[0];
         [SerializeField] private Transform[] _slotFills = new Transform[0];
+        [SerializeField] private TextMesh[] _slotTimerTexts = new TextMesh[0];
 
         private readonly float[] _remaining = new float[GameConstants.StoveSlotCount];
         private readonly bool[] _active = new bool[GameConstants.StoveSlotCount];
         private readonly bool[] _ready = new bool[GameConstants.StoveSlotCount];
+        private MaterialPropertyBlock _propBlock;
+
+        public float GetSlotRemaining(int slot) => (slot >= 0 && slot < GameConstants.StoveSlotCount) ? _remaining[slot] : 0f;
+        public bool IsSlotActive(int slot) => (slot >= 0 && slot < GameConstants.StoveSlotCount) && _active[slot];
+        public bool IsSlotReady(int slot) => (slot >= 0 && slot < GameConstants.StoveSlotCount) && _ready[slot];
 
         private void Awake()
         {
             SetStationName("Stove");
+            _propBlock = new MaterialPropertyBlock();
         }
 
         private void Update()
@@ -35,6 +46,7 @@ namespace YesChef.Stations
                 {
                     _ready[i] = true;
                     _active[i] = false;
+                    _remaining[i] = 0f;
                 }
                 dirty = true;
             }
@@ -43,20 +55,38 @@ namespace YesChef.Stations
 
         public override string GetPrompt(PlayerController player)
         {
-            if (AnyReady && !player.HasHeld) return "Q: pick up cooked meat";
+            if (AnyReady && !player.HasHeld)
+            {
+                return "E or Q: pick up cooked meat";
+            }
             if (player.Held is { Type: IngredientType.Meat, State: IngredientState.Raw })
-                return HasFreeSlot ? "E: place raw meat on stove" : "Stove full — wait or collect with Q";
+            {
+                return HasFreeSlot ? "E: place raw meat on stove" : "Stove full — wait or collect with E/Q";
+            }
             int cooking = CookingCount;
-            if (cooking > 0) return $"Cooking {cooking} meat... Q collects finished portions";
+            if (cooking > 0)
+            {
+                return cooking == 1
+                    ? "Cooking 1 meat... E/Q collects finished portions"
+                    : "Cooking 2 meat... E/Q collects finished portions";
+            }
             return "Bring raw meat here (Fridge: press 3)";
         }
 
         public override void Interact(PlayerController player)
         {
+            // Contextual pickup: If cooked meat is ready and hands are free, pick it up
+            if (AnyReady && !player.HasHeld)
+            {
+                Alternate(player);
+                return;
+            }
+
             if (player.Held is not { Type: IngredientType.Meat, State: IngredientState.Raw }) return;
             int slot = FreeSlot();
             if (slot < 0) return;
             if (!player.TryTake(out _)) return;
+
             _active[slot] = true;
             _ready[slot] = false;
             _remaining[slot] = GameConstants.StoveCookDuration;
@@ -87,33 +117,39 @@ namespace YesChef.Stations
             RefreshVisuals();
         }
 
-        private bool AnyReady
+        public bool AnyReady
         {
             get
             {
                 for (int i = 0; i < GameConstants.StoveSlotCount; i++)
+                {
                     if (_ready[i]) return true;
+                }
                 return false;
             }
         }
 
-        private int CookingCount
+        public int CookingCount
         {
             get
             {
                 int count = 0;
                 for (int i = 0; i < GameConstants.StoveSlotCount; i++)
+                {
                     if (_active[i] && !_ready[i]) count++;
+                }
                 return count;
             }
         }
 
-        private bool HasFreeSlot => FreeSlot() >= 0;
+        public bool HasFreeSlot => FreeSlot() >= 0;
 
-        private int FreeSlot()
+        public int FreeSlot()
         {
             for (int i = 0; i < GameConstants.StoveSlotCount; i++)
+            {
                 if (!_active[i] && !_ready[i]) return i;
+            }
             return -1;
         }
 
@@ -126,16 +162,22 @@ namespace YesChef.Stations
                 bool show = _active[i] || _ready[i];
                 visual.gameObject.SetActive(show);
                 if (show)
-                    visual.material.color = _ready[i]
-                        ? new Color(0.55f, 0.3f, 0.15f)
-                        : new Color(0.9f, 0.4f, 0.4f);
+                {
+                    Color color = _ready[i] ? GameConstants.MeatPreparedColor : GameConstants.MeatRawColor;
+                    visual.GetPropertyBlock(_propBlock);
+                    _propBlock.SetColor(s_ColorId, color);
+                    _propBlock.SetColor(s_LegacyColorId, color);
+                    visual.SetPropertyBlock(_propBlock);
+                }
             }
+
             for (int i = 0; i < _slotBars.Length && i < GameConstants.StoveSlotCount; i++)
             {
                 var bar = _slotBars[i];
                 if (bar == null) continue;
                 bar.gameObject.SetActive(_active[i] && !_ready[i]);
             }
+
             for (int i = 0; i < _slotFills.Length && i < GameConstants.StoveSlotCount; i++)
             {
                 var fill = _slotFills[i];
@@ -145,6 +187,27 @@ namespace YesChef.Stations
                     : (_ready[i] ? 1f : 0f);
                 fill.localScale = new Vector3(Mathf.Max(p, 0.001f), 1f, 1f);
                 fill.localPosition = new Vector3(-0.5f * (1f - p), 0f, 0f);
+            }
+
+            for (int i = 0; i < _slotTimerTexts.Length && i < GameConstants.StoveSlotCount; i++)
+            {
+                var timerText = _slotTimerTexts[i];
+                if (timerText == null) continue;
+                if (_active[i] && !_ready[i])
+                {
+                    timerText.gameObject.SetActive(true);
+                    timerText.text = GameConstants.FormatSeconds(Mathf.CeilToInt(_remaining[i]));
+                }
+                else if (_ready[i])
+                {
+                    timerText.gameObject.SetActive(true);
+                    timerText.text = "READY";
+                    timerText.color = GameConstants.MeatPreparedColor;
+                }
+                else
+                {
+                    timerText.gameObject.SetActive(false);
+                }
             }
         }
     }

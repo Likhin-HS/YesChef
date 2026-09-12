@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using YesChef.Core;
@@ -5,20 +6,21 @@ using YesChef.Core;
 namespace YesChef.Player
 {
     /// <summary>
-    /// Finds the nearest interactable inside a radius and routes E / Q to it.
-    /// Exposes a prompt string so the HUD always tells the player what E does.
-    /// The candidate set is cached (all stations are built upfront) and matched
-    /// with squared distances to avoid per-frame allocations.
+    /// Finds the nearest interactable inside interaction radius and routes E / Q to it.
+    /// Uses Interactable.All static registry for zero scene-traversal allocations.
+    /// Exposes a prompt string so the HUD always informs the player of available actions.
     /// </summary>
     [RequireComponent(typeof(PlayerController))]
     public sealed class PlayerInteractor : MonoBehaviour
     {
+        public event Action<Interactable> CurrentChanged;
+
         [SerializeField] private float _radius = GameConstants.InteractionRadius;
 
         private PlayerController _player;
-        private Interactable[] _all = System.Array.Empty<Interactable>();
         private Interactable _current;
         private float _radiusSqr;
+        private string _cachedPrompt = string.Empty;
 
         public Interactable Current => _current;
 
@@ -26,11 +28,6 @@ namespace YesChef.Player
         {
             _player = GetComponent<PlayerController>();
             _radiusSqr = _radius * _radius;
-        }
-
-        private void Start()
-        {
-            RefreshCache();
         }
 
         private void OnValidate()
@@ -43,51 +40,59 @@ namespace YesChef.Player
             RefreshCurrent();
 
             var keyboard = Keyboard.current;
-            var gamepad = Gamepad.current;
-            bool interactPressed = (keyboard != null && keyboard.eKey.wasPressedThisFrame)
-                || (gamepad != null && gamepad.buttonSouth.wasPressedThisFrame);
-            bool alternatePressed = (keyboard != null && keyboard.qKey.wasPressedThisFrame)
-                || (gamepad != null && gamepad.buttonWest.wasPressedThisFrame);
+            bool interactPressed = keyboard != null && keyboard.eKey.wasPressedThisFrame;
+            bool alternatePressed = keyboard != null && keyboard.qKey.wasPressedThisFrame;
 
             if (_current == null) return;
+
             var manager = Managers.GameManager.Instance;
             if (manager != null && !manager.IsPlaying) return;
 
-            if (interactPressed) _current.Interact(_player);
-            else if (alternatePressed) _current.Alternate(_player);
+            if (interactPressed)
+            {
+                _current.Interact(_player);
+            }
+            else if (alternatePressed)
+            {
+                _current.Alternate(_player);
+            }
         }
 
         public string GetPrompt()
         {
             if (_current == null)
-                return "WASD move  •  E interact  •  Q pick cooked/chopped";
+            {
+                return "WASD: Move  •  E: Interact  •  1/2/3: Select Fridge Item";
+            }
             return _current.GetPrompt(_player);
-        }
-
-        private void RefreshCache()
-        {
-            _all = FindObjectsByType<Interactable>(FindObjectsSortMode.None);
         }
 
         private void RefreshCurrent()
         {
-            if (_all == null || _all.Length == 0)
-                RefreshCache();
-            float best = float.MaxValue;
+            var candidates = Interactable.All;
+            float bestDistanceSqr = float.MaxValue;
             Interactable winner = null;
-            Vector3 self = transform.position;
+            Vector3 selfPosition = transform.position;
 
-            foreach (var item in _all)
+            int count = candidates.Count;
+            for (int i = 0; i < count; i++)
             {
+                var item = candidates[i];
                 if (item == null || !item.isActiveAndEnabled) continue;
-                float d = (self - item.transform.position).sqrMagnitude;
-                if (d <= _radiusSqr && d < best)
+
+                float distSqr = (selfPosition - item.transform.position).sqrMagnitude;
+                if (distSqr <= _radiusSqr && distSqr < bestDistanceSqr)
                 {
-                    best = d;
+                    bestDistanceSqr = distSqr;
                     winner = item;
                 }
             }
-            _current = winner;
+
+            if (_current != winner)
+            {
+                _current = winner;
+                CurrentChanged?.Invoke(_current);
+            }
         }
     }
 }

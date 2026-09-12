@@ -18,44 +18,22 @@ namespace YesChef.Data
             State = state;
         }
 
+        /// <summary>Cheese ships ready-to-serve; everything else needs a station.</summary>
         public bool IsPrepared => Type == IngredientType.Cheese || State == IngredientState.Prepared;
 
-        public int ScoreValue => Type switch
+        public string DisplayName => Type switch
         {
-            IngredientType.Vegetable => 20,
-            IngredientType.Cheese => 10,
-            IngredientType.Meat => 30,
-            _ => 0
+            IngredientType.Cheese => "Cheese",
+            IngredientType.Vegetable => IsPrepared ? "Chopped Veg" : "Raw Veg",
+            IngredientType.Meat => IsPrepared ? "Cooked Meat" : "Raw Meat",
+            _ => "Ingredient"
         };
-
-        public string DisplayName
-        {
-            get
-            {
-                string baseName = Type switch
-                {
-                    IngredientType.Vegetable => "Vegetable",
-                    IngredientType.Cheese => "Cheese",
-                    IngredientType.Meat => "Meat",
-                    _ => "Ingredient"
-                };
-                if (Type == IngredientType.Cheese)
-                    return baseName;
-                return State == IngredientState.Prepared
-                    ? Type == IngredientType.Vegetable ? "Chopped Veg" : "Cooked Meat"
-                    : Type == IngredientType.Vegetable ? "Raw Veg" : "Raw Meat";
-            }
-        }
 
         public Color DisplayColor => Type switch
         {
-            IngredientType.Vegetable => State == IngredientState.Prepared
-                ? new Color(0.2f, 0.8f, 0.25f)
-                : new Color(0.35f, 0.55f, 0.25f),
-            IngredientType.Cheese => new Color(1f, 0.85f, 0.2f),
-            IngredientType.Meat => State == IngredientState.Prepared
-                ? new Color(0.55f, 0.3f, 0.15f)
-                : new Color(0.9f, 0.4f, 0.4f),
+            IngredientType.Vegetable => IsPrepared ? GameConstants.VegPreparedColor : GameConstants.VegRawColor,
+            IngredientType.Cheese => GameConstants.CheeseColor,
+            IngredientType.Meat => IsPrepared ? GameConstants.MeatPreparedColor : GameConstants.MeatRawColor,
             _ => Color.white
         };
     }
