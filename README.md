@@ -26,16 +26,14 @@ press Play, and press **Start Game**.
 - High score persists between sessions (`PlayerPrefs`) and a **New High Score!** banner shows on the game-over panel.
 
 ## Architecture
-- `Assets/Scripts/YesChef/Core/` — `GameConstants` (all tuning in one place), `GameState`/`IngredientType`/`IngredientState` enums.
-- `Assets/Scripts/YesChef/Data/` — immutable `IngredientItem` struct; `OrderData` (requirements, fulfilment, `sum − ⌊seconds⌋` scoring).
-- `Assets/Scripts/YesChef/Player/` — `PlayerController` (Input System, clamped to kitchen), `PlayerInteractor`
+- `Assets/Scripts/Core/` — `GameConstants` (all tuning in one place), `GameState`/`IngredientType`/`IngredientState` enums.
+- `Assets/Scripts/Data/` — immutable `IngredientItem` struct; `OrderData` (requirements, fulfilment, `sum − ⌊seconds⌋` scoring).
+- `Assets/Scripts/Player/` — `PlayerController` (Input System, clamped to kitchen), `PlayerInteractor`
   (cached proximity search, E/Q routing, prompt text), `Interactable` base.
-- `Assets/Scripts/YesChef/Stations/` — `Refrigerator`, `ChoppingTable`, `Stove`, `Trash`.
-- `Assets/Scripts/YesChef/CustomerWindow.cs` — order lifecycle: spawn → age → serve → score → 5s respawn,
-  with 3D status lamp and floating score popup.
-- `Assets/Scripts/YesChef/Managers/GameManager.cs` — state machine (NotStarted/Playing/Paused/GameOver),
+- `Assets/Scripts/Stations/` — `Refrigerator`, `ChoppingTable`, `Stove`, `Trash`, and `CustomerWindow` (order lifecycle: spawn → age → serve → score → 5s respawn, with 3D status lamp and floating score popup).
+- `Assets/Scripts/Managers/GameManager.cs` — state machine (NotStarted/Playing/Paused/GameOver),
   3-minute timer, score + high-score persistence; UI observes it through events.
-- `Assets/Scripts/YesChef/UI/GameHUD.cs` — drives all screen-space HUD elements (score, timer, order cards,
+- `Assets/Scripts/UI/GameHUD.cs` — drives all screen-space HUD elements (score, timer, order cards,
   modals). UI hierarchy is built in the editor; the script handles logic only.
 
 ## Design decisions

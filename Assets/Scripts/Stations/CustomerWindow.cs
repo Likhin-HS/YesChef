@@ -4,7 +4,7 @@ using YesChef.Data;
 using YesChef.Managers;
 using YesChef.Player;
 
-namespace YesChef
+namespace YesChef.Stations
 {
     /// <summary>
     /// One of four serving windows. Generates 2-3 random ingredients,
