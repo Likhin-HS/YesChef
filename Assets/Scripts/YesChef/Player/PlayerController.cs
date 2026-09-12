@@ -38,6 +38,8 @@ namespace YesChef.Player
         private CharacterController _controller;
         private IngredientItem? _held;
         private MaterialPropertyBlock _propBlock;
+        private Vector3 _spawnPosition;
+        private Quaternion _spawnRotation;
 
         public IngredientItem? Held => _held;
         public bool HasHeld => _held.HasValue;
@@ -49,6 +51,8 @@ namespace YesChef.Player
         {
             _controller = GetComponent<CharacterController>();
             _propBlock = new MaterialPropertyBlock();
+            _spawnPosition = transform.position;
+            _spawnRotation = transform.rotation;
             if (_heldVisual != null) _heldVisual.gameObject.SetActive(false);
             if (_heldRawVeg != null) _heldRawVeg.SetActive(false);
             if (_heldChoppedVeg != null) _heldChoppedVeg.SetActive(false);
@@ -144,6 +148,24 @@ namespace YesChef.Player
         {
             _held = null;
             RefreshHeldVisual();
+        }
+
+        public void ResetPosition()
+        {
+            if (_controller != null)
+            {
+                _controller.enabled = false;
+                transform.position = _spawnPosition;
+                transform.rotation = _spawnRotation;
+                _controller.enabled = true;
+            }
+            else
+            {
+                transform.position = _spawnPosition;
+                transform.rotation = _spawnRotation;
+            }
+            MoveInput = Vector2.zero;
+            IsMoving = false;
         }
 
         private void RefreshHeldVisual()

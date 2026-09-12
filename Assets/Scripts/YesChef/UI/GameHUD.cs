@@ -59,7 +59,7 @@ namespace YesChef.UI
         private readonly int[] _lastCardSeconds = new int[GameConstants.MaxActiveOrders];
 
         private const string DefaultControlsTitle = "Controls";
-        private const string DefaultControlsBody = "<b>W  A  S  D</b>   - Move\n<b>E</b>               - Interact / Pick up / Place\n<b>Space</b>       - Drop (optional)";
+        private const string DefaultControlsBody = "<b>W  A  S  D</b>   - Move\n<b>E</b>               - Interact / Pick up / Place\n<b>Q</b>               - Collect / Cycle\n<b>Trash</b>       - Discard item";
 
         private string _lastPrompt = null;
         private string _lastHeldDisplayName = string.Empty;
@@ -187,7 +187,7 @@ namespace YesChef.UI
                 {
                     if (_controlsTitle != null) _controlsTitle.text = "<color=#F1C40F>★ CURRENT ACTION</color>";
                     string promptColor = currentPrompt.Contains("!") ? "#F39C12" : "#2ECC71";
-                    _promptText.text = $"<color={promptColor}><b>▶ {currentPrompt}</b></color>\n<size=19><color=#8892B0><b>W A S D</b> - Move  •  <b>Space</b> - Drop</color></size>";
+                    _promptText.text = $"<color={promptColor}><b>▶ {currentPrompt}</b></color>\n<size=19><color=#8892B0><b>W A S D</b> - Move  •  <b>E</b> - Interact  •  <b>Q</b> - Collect/Cycle</color></size>";
                 }
             }
         }

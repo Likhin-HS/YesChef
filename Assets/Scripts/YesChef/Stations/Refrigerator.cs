@@ -20,7 +20,7 @@ namespace YesChef.Stations
         public override string GetPrompt(PlayerController player)
         {
             if (player.HasHeld) return "Hands full — deliver or trash it";
-            return $"E: take a {Selected}  •  1 Veg / 2 Cheese / 3 Meat";
+            return $"E: take {Selected}  •  Q: cycle  •  1/2/3: select";
         }
 
         public override void Interact(PlayerController player)
@@ -28,6 +28,12 @@ namespace YesChef.Stations
             if (player.HasHeld) return;
             var state = Selected == IngredientType.Cheese ? IngredientState.Prepared : IngredientState.Raw;
             player.TryGive(new IngredientItem(Selected, state));
+        }
+
+        public override void Alternate(PlayerController player)
+        {
+            // Cycle ingredient with Q
+            Selected = (IngredientType)(((int)Selected + 1) % GameConstants.IngredientTypeCount);
         }
     }
 }

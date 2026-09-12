@@ -88,7 +88,8 @@ namespace YesChef.Managers
 
             for (int i = 0; i < _customerWindows.Length; i++)
             {
-                _customerWindows[i].SpawnInitialOrder(i, i * 8f);
+                // Blueprint spec: "The game starts with all 4 open orders automatically."
+                _customerWindows[i].SpawnInitialOrder(i, 0f);
             }
         }
 
@@ -151,7 +152,11 @@ namespace YesChef.Managers
             {
                 stove.ResetStation();
             }
-            _player?.ClearHeld();
+            if (_player != null)
+            {
+                _player.ClearHeld();
+                _player.ResetPosition();
+            }
         }
 
         private void EndGame()

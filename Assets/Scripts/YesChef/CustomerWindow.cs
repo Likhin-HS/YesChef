@@ -79,6 +79,11 @@ namespace YesChef
                 _customerBasePos = _customerChar.localPosition;
                 HideCustomer();
             }
+
+            if (_speechBubble != null)
+            {
+                _speechBubble.SetActive(false);
+            }
         }
 
         public void Configure(int index)
@@ -110,11 +115,15 @@ namespace YesChef
                 else
                 {
                     int sec = Mathf.CeilToInt(_respawnRemaining);
-                    if (sec != _lastWorldTimerSec && _worldRequirementText != null)
+                    if (sec != _lastWorldTimerSec)
                     {
                         _lastWorldTimerSec = sec;
-                        _worldRequirementText.text = GameConstants.FormatNextIn(sec);
+                        if (_worldRequirementText != null)
+                        {
+                            _worldRequirementText.text = GameConstants.FormatNextIn(sec);
+                        }
                     }
+                    UpdateRespawnBubbleDisplay(_respawnRemaining);
                 }
                 return;
             }
@@ -122,18 +131,15 @@ namespace YesChef
             if (_order != null && !_order.IsComplete)
             {
                 _order.Tick(Time.deltaTime);
-                if (_order.Elapsed >= GameConstants.OrderExpireTime)
-                {
-                    DepartCustomer();
-                    GameManager.Instance?.NotifyOrderCompleted(this, _windowIndex, _order, true);
-                    return;
-                }
-                int sec = (int)_order.Elapsed;
-                if (sec != _lastWorldTimerSec && _worldTimerText != null)
+                int sec = Mathf.FloorToInt(_order.Elapsed);
+                if (sec != _lastWorldTimerSec)
                 {
                     _lastWorldTimerSec = sec;
-                    _worldTimerText.text = GameConstants.FormatSeconds(sec);
-                    _worldTimerText.color = _order.Elapsed > 30f ? Color.red : Color.white;
+                    if (_worldTimerText != null)
+                    {
+                        _worldTimerText.text = GameConstants.FormatSeconds(sec);
+                        _worldTimerText.color = _order.Elapsed > 30f ? Color.red : Color.white;
+                    }
                 }
                 UpdateBubbleTimer(_order.Elapsed);
             }
@@ -169,6 +175,7 @@ namespace YesChef
             RefreshVisual(null);
             RefreshWorldRequirements();
             if (_worldTimerText != null) _worldTimerText.gameObject.SetActive(false);
+            if (_speechBubble != null) _speechBubble.SetActive(false);
         }
 
         public override string GetPrompt(PlayerController player)
@@ -451,7 +458,13 @@ namespace YesChef
         {
             if (_speechBubble == null) return;
 
-            if (_waitingRespawn || _order == null || _order.IsComplete)
+            if (_waitingRespawn)
+            {
+                UpdateRespawnBubbleDisplay(_respawnRemaining);
+                return;
+            }
+
+            if (_order == null || _order.IsComplete)
             {
                 _speechBubble.SetActive(false);
                 return;
@@ -517,20 +530,56 @@ namespace YesChef
         {
             if (_bubbleTimerText == null && _barFill == null) return;
 
-            float maxTime = 60f;
-            float remaining = Mathf.Max(0f, maxTime - elapsed);
-            int sec = Mathf.CeilToInt(remaining);
+            // Blueprint: Timer indicates how long the order has been open (count up, floored seconds)
+            int sec = Mathf.FloorToInt(elapsed);
 
             if (_bubbleTimerText != null)
             {
                 _bubbleTimerText.text = sec + "s";
-                _bubbleTimerText.color = remaining <= 15f ? new Color(0.9f, 0.2f, 0.2f) : new Color(0.2f, 0.2f, 0.25f);
+                // Color cues: Normal (<20s) -> Amber warning (20s-35s) -> Red urgent (>35s)
+                if (elapsed >= 35f)
+                    _bubbleTimerText.color = new Color(0.9f, 0.2f, 0.2f);
+                else if (elapsed >= 20f)
+                    _bubbleTimerText.color = new Color(0.85f, 0.5f, 0.1f);
+                else
+                    _bubbleTimerText.color = new Color(0.2f, 0.2f, 0.25f);
             }
 
             if (_barFill != null)
             {
-                float ratio = Mathf.Clamp01(remaining / maxTime);
-                _barFill.localScale = new Vector3(ratio, 0.85f, 1.2f);
+                // Urgency bar fills up as order stays open (filling from 0 to 1 over 30s)
+                float ratio = Mathf.Clamp01(elapsed / 30f);
+                _barFill.localScale = new Vector3(Mathf.Max(0.01f, ratio), 0.85f, 1.2f);
+                _barFill.localPosition = new Vector3((ratio - 1f) * 0.5f, 0f, -0.01f);
+            }
+        }
+
+        private void UpdateRespawnBubbleDisplay(float remaining)
+        {
+            if (_speechBubble == null) return;
+
+            _speechBubble.SetActive(true);
+
+            // Hide ingredient icons while awaiting customer
+            if (_bubbleIcons != null)
+            {
+                for (int i = 0; i < _bubbleIcons.Length; i++)
+                {
+                    if (_bubbleIcons[i] != null) _bubbleIcons[i].gameObject.SetActive(false);
+                }
+            }
+
+            int sec = Mathf.CeilToInt(remaining);
+            if (_bubbleTimerText != null)
+            {
+                _bubbleTimerText.text = "In " + sec + "s";
+                _bubbleTimerText.color = new Color(0.45f, 0.45f, 0.5f);
+            }
+
+            if (_barFill != null)
+            {
+                float ratio = Mathf.Clamp01(remaining / GameConstants.OrderRespawnDelay);
+                _barFill.localScale = new Vector3(Mathf.Max(0.01f, ratio), 0.85f, 1.2f);
                 _barFill.localPosition = new Vector3((ratio - 1f) * 0.5f, 0f, -0.01f);
             }
         }
