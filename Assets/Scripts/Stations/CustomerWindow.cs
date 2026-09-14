@@ -7,9 +7,7 @@ using YesChef.Player;
 namespace YesChef.Stations
 {
     /// <summary>
-    /// One of four serving windows. Generates 2-3 random ingredients,
-    /// ticks its age while playing, accepts prepared items, displays world-space UI, and respawns after 5 seconds.
-    /// Uses MaterialPropertyBlock for status lamp rendering to prevent material leaks.
+    /// Customer window that receives orders, displays requirements, and handles delivery.
     /// </summary>
     public sealed class CustomerWindow : Interactable
     {
@@ -254,7 +252,7 @@ namespace YesChef.Stations
         }
 
         /// <summary>
-        /// Displays floating score popup (+17 / -6) near the window, animating upwards and fading.
+        /// Shows floating score popup (+17 / -6) when an order is completed.
         /// </summary>
         public void ShowScorePopup(int awarded)
         {

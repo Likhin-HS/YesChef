@@ -8,9 +8,7 @@ using YesChef.Managers;
 namespace YesChef.Player
 {
     /// <summary>
-    /// Player character movement and single-held item inventory controller.
-    /// Clamped to the kitchen bounds. Enforces single-held item rule strictly.
-    /// Uses MaterialPropertyBlock for the held visual to prevent runtime material leaks.
+    /// Handles player movement, kitchen boundary clamping, and held items.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
     public sealed class PlayerController : MonoBehaviour

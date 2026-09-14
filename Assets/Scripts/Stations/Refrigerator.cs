@@ -6,8 +6,7 @@ using YesChef.Player;
 namespace YesChef.Stations
 {
     /// <summary>
-    /// Infinite source of raw ingredients. E takes the currently selected
-    /// ingredient (1/2/3 to choose); selection UI lives in the HUD.
+    /// Refrigerator station to grab raw ingredients (1/2/3 or Q to select).
     /// </summary>
     public sealed class Refrigerator : Interactable
     {

@@ -4,9 +4,7 @@ using UnityEngine;
 namespace YesChef.Player
 {
     /// <summary>
-    /// Base class for all interactable kitchen stations.
-    /// Maintains a static registry of active interactables so the interactor
-    /// performs zero scene searches or heap allocations during proximity queries.
+    /// Base class for all interactive kitchen stations.
     /// </summary>
     public abstract class Interactable : MonoBehaviour
     {

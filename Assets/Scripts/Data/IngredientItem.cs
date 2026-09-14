@@ -4,8 +4,7 @@ using YesChef.Core;
 namespace YesChef.Data
 {
     /// <summary>
-    /// Lightweight value type describing a single carried ingredient.
-    /// Immutable so station logic cannot accidentally mutate shared state.
+    /// Represents a held ingredient and its preparation state.
     /// </summary>
     public readonly struct IngredientItem
     {
@@ -18,7 +17,7 @@ namespace YesChef.Data
             State = state;
         }
 
-        /// <summary>Cheese ships ready-to-serve; everything else needs a station.</summary>
+        /// <summary>Cheese is ready immediately; veg and meat need prep.</summary>
         public bool IsPrepared => Type == IngredientType.Cheese || State == IngredientState.Prepared;
 
         public string DisplayName => Type switch

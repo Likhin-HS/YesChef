@@ -11,7 +11,7 @@ using YesChef.Stations;
 namespace YesChef.UI
 {
     /// <summary>
-    /// Drives all screen-space HUD elements and binds them to <see cref="GameManager"/> events.
+    /// Updates HUD elements (timer, score, controls prompt, and modals).
     /// </summary>
     public sealed class GameHUD : MonoBehaviour
     {

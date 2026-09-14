@@ -3,9 +3,7 @@ using UnityEngine;
 namespace YesChef.Player
 {
     /// <summary>
-    /// Lightweight procedural walk animator for the chibi chef.
-    /// Handles alternating leg stride, foot lift, and subtle body bobbing/sway.
-    /// Smoothly damps back to a clean flat-footed rest pose when idle.
+    /// Procedural walk bobbing and leg stride animation for the chef.
     /// </summary>
     public sealed class ChefAnimator : MonoBehaviour
     {

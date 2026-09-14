@@ -3,8 +3,7 @@ using UnityEngine;
 namespace YesChef.Core
 {
     /// <summary>
-    /// Central tuning constants and shared styling for the Yes Chef! prototype.
-    /// Gameplay balance numbers, station timers, colors, and cached string tables are kept here.
+    /// Shared balance constants, timers, and colors.
     /// </summary>
     public static class GameConstants
     {

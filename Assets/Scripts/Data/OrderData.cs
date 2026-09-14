@@ -5,11 +5,7 @@ using YesChef.Core;
 namespace YesChef.Data
 {
     /// <summary>
-    /// Runtime model for a single customer order.
-    /// Requirements are stored as per-type counts so duplicate ingredients
-    /// (e.g. "Meat, Meat, Meat") fall out naturally.
-    /// Scoring formula: sum(ingredient values) - floor(seconds open), per blueprint spec.
-    /// Requirement text is cached to avoid string allocations during UI updates.
+    /// Tracks customer order requirements, fulfilled items, and score.
     /// </summary>
     public sealed class OrderData
     {
@@ -91,8 +87,7 @@ namespace YesChef.Data
         }
 
         /// <summary>
-        /// Base value minus whole seconds open (floored per spec, can be negative).
-        /// Example: 10 (Cheese) + 30 (Meat) - 14.99s = 40 - 14 = 26 points.
+        /// Sum of ingredient values minus whole seconds elapsed.
         /// </summary>
         public int CalculateScore() => _baseScore - Mathf.FloorToInt(Elapsed);
 
@@ -108,7 +103,7 @@ namespace YesChef.Data
         public string GetRequirementText() => _cachedRequirementText;
 
         /// <summary>
-        /// Populates a list with remaining ingredient types for UI icon binding.
+        /// Fills a list with remaining ingredients needed for UI icons.
         /// </summary>
         public void FillRemainingIngredients(IList<IngredientType> destination)
         {

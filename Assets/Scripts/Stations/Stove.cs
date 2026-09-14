@@ -6,9 +6,7 @@ using YesChef.Player;
 namespace YesChef.Stations
 {
     /// <summary>
-    /// Cooks up to two raw meats in parallel over <see cref="GameConstants.StoveCookDuration"/> seconds.
-    /// Player may walk away; E or Q collects the first finished portion when hands are free.
-    /// Uses MaterialPropertyBlock to update slot visuals without creating material instances.
+    /// Stove station with 2 cooking slots for raw meat (6 seconds each).
     /// </summary>
     public sealed class Stove : Interactable
     {

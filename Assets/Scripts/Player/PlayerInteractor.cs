@@ -6,9 +6,7 @@ using YesChef.Core;
 namespace YesChef.Player
 {
     /// <summary>
-    /// Finds the nearest interactable inside interaction radius and routes E / Q to it.
-    /// Uses Interactable.All static registry for zero scene-traversal allocations.
-    /// Exposes a prompt string so the HUD always informs the player of available actions.
+    /// Finds the closest station within range and routes interaction inputs (E / Q).
     /// </summary>
     [RequireComponent(typeof(PlayerController))]
     public sealed class PlayerInteractor : MonoBehaviour

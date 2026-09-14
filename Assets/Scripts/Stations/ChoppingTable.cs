@@ -6,9 +6,7 @@ using YesChef.Player;
 namespace YesChef.Stations
 {
     /// <summary>
-    /// Chops one raw vegetable over <see cref="GameConstants.TableChopDuration"/> seconds.
-    /// Player may walk away; E or Q collects the chopped result when hands are free.
-    /// Uses MaterialPropertyBlock to update visuals without creating material instances.
+    /// Station for chopping raw vegetables (2 seconds).
     /// </summary>
     public sealed class ChoppingTable : Interactable
     {

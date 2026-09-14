@@ -4,7 +4,7 @@ using YesChef.Player;
 namespace YesChef.Stations
 {
     /// <summary>
-    /// Discards whatever the player is holding. Safety valve for wrong picks.
+    /// Trash bin to discard the currently held item.
     /// </summary>
     public sealed class Trash : Interactable
     {

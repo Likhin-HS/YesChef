@@ -8,8 +8,7 @@ using YesChef.Stations;
 namespace YesChef.Managers
 {
     /// <summary>
-    /// Owns game state, 3-minute timer, score tally, session high-score persistence, and order management.
-    /// Stations and windows report to this manager; UI observes it through decoupled events.
+    /// Manages game state, the 3-minute match timer, and score.
     /// </summary>
     public sealed class GameManager : MonoBehaviour
     {
